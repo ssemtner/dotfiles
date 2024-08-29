@@ -1,0 +1,110 @@
+##!/bin/bash
+
+# This is a demo config to showcase some of the most important commands.
+# It is meant to be changed and configured, as it is intentionally kept sparse.
+# For a (much) more advanced configuration example see my dotfiles:
+# https://github.com/FelixKratz/dotfiles
+
+source "$CONFIG_DIR/colors.sh"
+
+PLUGIN_DIR="$CONFIG_DIR/plugins"
+
+##### Bar Appearance #####
+# Configuring the general appearance of the bar.
+# These are only some of the options available. For all options see:
+# https://felixkratz.github.io/SketchyBar/config/bar
+# If you are looking for other colors, see the color picker:
+# https://felixkratz.github.io/SketchyBar/config/tricks#color-picker
+
+sketchybar --bar position=top height=40 blur_radius=30 color=$BAR_COLOR
+
+##### Changing Defaults #####
+# We now change some default values, which are applied to all further items.
+# For a full list of all available item properties see:
+# https://felixkratz.github.io/SketchyBar/config/items
+
+default=(
+  padding_left=5
+  padding_right=5
+  icon.font="SF Pro:Semibold:15.0"
+  label.font="SF Pro:Semibold:15.0"
+  background.color=$ITEM_BG_COLOR
+  background.corner_radius=5
+  background.height=24
+  icon.color=$WHITE
+  label.color=$WHITE
+  icon.padding_left=10
+  icon.padding_right=4
+  label.padding_left=4
+  label.padding_right=10
+)
+sketchybar --default "${default[@]}"
+
+
+##### Left Side #####
+
+sketchybar --add item front_app left \
+           --set front_app background.color=$ACCENT_COLOR \
+                           icon.color=$BAR_COLOR \
+                           icon.font="sketchybar-app-font:Regular:16.0" \
+                           label.color=$BAR_COLOR \
+                           script="$PLUGIN_DIR/front_app.sh"            \
+           --subscribe front_app front_app_switched
+
+sketchybar --add event aerospace_workspace_change
+
+for sid in $(aerospace list-workspaces --all); do
+  sketchybar --add item space.$sid left \
+             --set space.$sid \
+                   background.drawing=off \
+                   label.font="sketchybar-app-font:Regular:16.0" \
+                   icon.padding_left=10 \
+                   icon.padding_right=0 \
+                   label.padding_left=0 \
+                   label.padding_right=10 \
+                   background.padding_left = 2 \
+                   background.padding_right = 2 \
+                   icon="$sid" \
+                   click_script="aerospace workspace $sid" \
+                   script="$PLUGIN_DIR/aerospace.sh $sid" \
+             --subscribe space.$sid aerospace_workspace_change
+done
+
+
+##### Right of Notch #####
+
+sketchybar --add item media e \
+           --set media icon=􀑪 \
+                       icon.color=$ACCENT_COLOR \
+                       label.color=$ACCENT_COLOR \
+                       label.max_chars=20 \
+                       scroll_texts=on \
+                       background.drawing=off \
+                       script="$PLUGIN_DIR/media.sh" \
+           --subscribe media media_change
+
+
+
+##### Right Side #####
+
+sketchybar --add item calendar right \
+           --set calendar icon=􀧞 \
+                          update_freq=30 \
+                          script="$PLUGIN_DIR/calendar.sh"
+
+sketchybar --add item volume right \
+           --set volume script="$PLUGIN_DIR/volume.sh" \
+           --subscribe volume volume_change
+
+sketchybar --add item battery right \
+           --set battery update_freq=120 \
+                         script="$PLUGIN_DIR/battery.sh" \
+           --subscribe battery system_woke power_source_change
+
+sketchybar --add item cpu right \
+           --set cpu icon=􀧓 \
+                     update_freq=2 \
+                     script="$PLUGIN_DIR/cpu.sh"
+
+##### Force all scripts to run the first time (never do this in a script) #####
+sketchybar --update
